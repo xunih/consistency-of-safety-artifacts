@@ -9,6 +9,8 @@ sim_only_nor.csv
 vect_only_non.csv
 vect_only_nor.csv
 
-__pycache__
+__pycache__/
 
 doc/
+
+.idea/
