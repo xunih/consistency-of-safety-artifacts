@@ -6,6 +6,7 @@ def write_data(score_SVC, mean_SVC,
                std_SVC, SVC_acc, score_KNN,
                mean_KNN,
                std_KNN, acc1, mat1, re1, acc2, mat2, re2, file_name):
+    # Write classifier evaluation result into a csv file
     with open(file_name, mode='a', newline='') as csv_file:
         field = ['Score_SVC', 'Score_KNN', 'Mean_SVC', 'Mean_KNN', 'Std_SVC', 'Std_KNN', 'Accuracy_SVC_non',
                  'Confusion_matrix_SVC_non', 'Report_SVC_non', 'Accuracy_KNN_non',

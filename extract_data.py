@@ -1,14 +1,17 @@
-import xlrd
 import openpyxl
 from pathlib import Path
 # noinspection PyUnresolvedReferences
 from xml.dom import minidom
 
+# File where can find traceability links
 trace_link_file = 'artifactWrappers.xmi'
 trace_model_file = 'traceModel.xmi'
+# Hazard file
 hazard_file = 'mobstr-hazards.xlsx'
+# Safety requirement file which was preprocessed to easier get content of each safety requirement
 requirement_file = 'mobstr-requirements.xlsx'
-req_file_without_preprocessing = 'resource/org.panorama-research.mobstr.requirements/mobstr-requirements.xlsx'
+# Original safety requirement file
+req_file_original = 'mobstr-requirements_original.xlsx'
 
 
 class Node:
@@ -34,40 +37,51 @@ class SafetyRequirement(Node):
     pass
 
 
-def artifactWrapperHandler():
-    xmldoc = minidom.parse(trace_link_file)
-    sub_grpaph_link = []
-    for element in xmldoc.getElementsByTagName('artifacts'):
+def artifact_wrapper_handler():
+    # Iterate the file where can find traceability links, to get the links of hazard and safety goal
+    # This only apply to this specific dataset
+    trace_link_doc = minidom.parse(trace_link_file)
+    sub_graph_link = []
+    for element in trace_link_doc.getElementsByTagName('artifacts'):
         if 'platform' in element.getAttribute('path'):
-            id = element.getAttribute('path').partition('row=')
+            # Split the path of hazard and safety goal in order to get the id of them
+            # The third element of it is the id
+            path_split = element.getAttribute('path').partition('row=')
+            # Get the path of hazard and its related safety goal
             path = element.getAttribute('path').split('platform:/')[1].split('/mobstr-')[0]
             if 'hazard' in path:
-                file = Path(path, hazard_file)
-                obj = openpyxl.load_workbook(file, data_only=True)
-                sheet = obj.active
+                file = Path(hazard_file)
+                file_object = openpyxl.load_workbook(file, data_only=True)
+                sheet = file_object.active
+                # Get the text of each hazard in the hazard .xlsx file
                 for row in range(1, sheet.max_row + 1):
-                    if sheet.cell(row=row, column=1).value == id[2]:
-                        string = id[2] + ' ' + sheet.cell(row=row, column=2).value
-                        sub_grpaph_link.append(string)
+                    if sheet.cell(row=row, column=1).value == path_split[2]:
+                        string = path_split[2] + ' ' + sheet.cell(row=row, column=2).value
+                        # Save the text to a list
+                        sub_graph_link.append(string)
             elif 'requirement' in path:
-                file = Path(path, requirement_file)
-                obj = openpyxl.load_workbook(file, data_only=True)
-                sheet = obj.active
+                file = Path(req_file_original)
+                file_object = openpyxl.load_workbook(file, data_only=True)
+                sheet = file_object.active
+                # Get the text of each safety goal in the requirement .xlsx file
                 for row in range(1, sheet.max_row + 1):
-                    if sheet.cell(row=row, column=1).value == id[2]:
-                        string = id[2] + ' ' + sheet.cell(row=row, column=3).value
-                        sub_grpaph_link.append(string)
+                    if sheet.cell(row=row, column=1).value == path_split[2]:
+                        string = path_split[2] + ' ' + sheet.cell(row=row, column=3).value
+                        # Save the text to the list
+                        sub_graph_link.append(string)
         else:
-            sub_grpaph_link.append(element.getAttribute('path'))
+            sub_graph_link.append(element.getAttribute('path'))
 
-    return sub_grpaph_link
+    return sub_graph_link
 
 
 def add_failure():
+    # Extract text of failure in traceModel.xmi and save it
+    # Only apply to this specific dataset
     failure_list = []
-    xmldoc = minidom.parse(trace_model_file)
+    trace_model_doc = minidom.parse(trace_model_file)
     failure_id = 0
-    for element in xmldoc.getElementsByTagName('traces'):
+    for element in trace_model_doc.getElementsByTagName('traces'):
         failure_id += 1
         failure = Failure(failure_id)
         if 'Failure' in element.getAttribute('name'):
@@ -78,16 +92,23 @@ def add_failure():
 
 
 def add_hazard(element, failure):
+    # Create a dictionary to save founded hazards
     dict_h = {}
-    sub_grpaph_link = artifactWrapperHandler()
+    # Get the hazard and safety goal list
+    sub_grpaph_link = artifact_wrapper_handler()
+    # Iterate the traceModel.xmi to get the id of the hazards that each failure is related to
     for e1 in element.getElementsByTagName('target'):
-        p1 = e1.getAttribute('href')
-        id1 = p1.partition('@artifacts.')
-        textInList1 = sub_grpaph_link[(int(id1[2]))]
-        hazard_id = id1[2]
+        # Path of each related hazard
+        path_related_hazard = e1.getAttribute('href')
+        # Split the path in order to get the hazard id
+        path_split = path_related_hazard.partition('@artifacts.')
+        hazard_id = path_split[2]
+        # Find the text of the hazard by the id in the list
+        hazard_text = sub_grpaph_link[(int(hazard_id))]
+        # If it's a new hazard, add it to the dictionary
         if hazard_id not in dict_h:
             hazard = Hazard(hazard_id)
-            hazard.text = textInList1
+            hazard.text = hazard_text
             current_hazard_id = hazard.text.split(' ')[0]
             dict_h[hazard_id] = hazard
         else:
@@ -97,13 +118,15 @@ def add_hazard(element, failure):
 
 
 def add_safety_goal(hazard, hazard_id, current_hazard_id):
+    # Create a dictionary to save safety goal
     dict_s = {}
     safety_goal_id = hazard_id
-
+    # If it's a new safety goal, add it to the dictionary
     if safety_goal_id not in dict_s:
-        file = Path(req_file_without_preprocessing)
+        file = Path(req_file_original)
         obj = openpyxl.load_workbook(file, data_only=True)
         sheet = obj.active
+        # Get text of related safety goal
         for row in range(1, sheet.max_row + 1):
             if sheet.cell(row=row, column=2).value == current_hazard_id:
                 safety_goal = SafetyGoal(safety_goal_id)
@@ -120,14 +143,14 @@ def add_safety_requirement(safety_goal, safety_goal_id, current_hazard_id):
     dict_r = {}
     requirement_id = safety_goal_id
     if requirement_id not in dict_r:
-        id_row_number = 0
         file = Path(requirement_file)
         obj = openpyxl.load_workbook(file, data_only=True)
         sheet = obj.active
-        for findid in range(1, sheet.max_row):
-            if sheet.cell(row=findid, column=2).value is not None and current_hazard_id in sheet.cell(
-                    row=findid, column=2).value:
-                id_row_number = findid
+        # Get text of all safety requirements
+        for find_id in range(1, sheet.max_row):
+            if sheet.cell(row=find_id, column=2).value is not None and current_hazard_id in sheet.cell(
+                    row=find_id, column=2).value:
+                id_row_number = find_id
                 for row in range(id_row_number + 1, sheet.max_row):
                     if sheet.cell(row=row, column=1).value is not None and 'SR' in sheet.cell(row=row,
                                                                                               column=1).value:
@@ -144,13 +167,13 @@ def add_safety_requirement(safety_goal, safety_goal_id, current_hazard_id):
 
 
 def print_everything(failure_list):
+    # Print all traceability links to visualize
     for failure in failure_list:
         print()
         print("FAILURE")
         # print("Id")
         # print(failure.id)
         print("Failure Text: " + failure.text)
-        # time.sleep(0.2)
         print_hazards(failure.target)
 
 
@@ -160,8 +183,6 @@ def print_hazards(hazards):
         # print("Id")
         # print(hazard.id)
         print("Hazard Text: " + hazard.text)
-        # time.sleep(0.2)
-
         print_safety_goals(hazard.target)
 
 
@@ -171,7 +192,6 @@ def print_safety_goals(safety_goals):
         # print("id")
         # print(safety_goal.id)
         print("Safety goal Text: " + safety_goal.text)
-        # time.sleep(0.2)
         print_requirements(safety_goal.target)
 
 
@@ -180,12 +200,6 @@ def print_requirements(requirements):
         print("REQUIREMENT")
         # print("id")
         # print(requirement.id)
-        # print(requirement.id)
         print("Safety requirement Text: ")
         print(requirement.text)
-        # time.sleep(0.2)
 
-
-if __name__ == '__main__':
-    l = add_failure()
-    # print_everything(l)

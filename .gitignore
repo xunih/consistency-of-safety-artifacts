@@ -1,4 +1,4 @@
-mobstr-dataset/
+resource/
 
 both_non.csv
 both_nor.csv
@@ -8,3 +8,7 @@ sim_only_nor.csv
 
 vect_only_non.csv
 vect_only_nor.csv
+
+__pycache__
+
+doc/
