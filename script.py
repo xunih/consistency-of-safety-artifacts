@@ -114,7 +114,7 @@ def get_input_for_classifier(failure_list):
                     sim_two.append(similarity_cosine_l_normalized)
                     sim_two.append(similarity_universial_normalized)
                     sim_only_2.append(sim_two)
-                    print('Test 1')
+                   
                     # Concatenate similarities and texts to get a word embedded vector
                     # Non-normalized
                     vector_one = vectorize_word.vectorize_word(sim_one, failure.text, requirement.text)
@@ -123,7 +123,7 @@ def get_input_for_classifier(failure_list):
                     # Get a list consists of all vectors, to be the input of the classifier
                     vect_1.append(vector_one)
                     vect_2.append(vector_two)
-                    print('Test 2')
+                   
                     # Concatenate only texts of failure and requirement to get a word embedded vector
                     # Non-normalized
                     vector_only_one = vectorize_word.vectorize_word([], failure.text, requirement.text)
@@ -132,7 +132,7 @@ def get_input_for_classifier(failure_list):
                     # Get a list consists of all vectors, to be the input of the classifier
                     vect_only_1.append(vector_only_one)
                     vect_only_2.append(vector_only_two)
-                    print('Test 3')
+                    
     return sim_only_1, sim_only_2, vect_only_1, vect_only_2, vect_1, vect_2
 
 
