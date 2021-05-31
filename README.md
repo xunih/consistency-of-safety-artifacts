@@ -1,7 +1,14 @@
 # consistency-of-safety-artifacts
 
 ## Introduction
-Dataset demonstarted in the script is provided by [MobSTr dataset](https://github.com/panorama-research/mobstr-dataset#the-mobstr-dataset-model-based-safety-assurance-and-traceability).
+Dataset demonstarted in the script is provided by [MobSTr dataset](https://github.com/panorama-research/mobstr-dataset#the-mobstr-dataset-model-based-safety-assurance-and-traceability). 
+
+Files that are from [MobSTr dataset](https://github.com/panorama-research/mobstr-dataset#the-mobstr-dataset-model-based-safety-assurance-and-traceability):
+* artifactWrappers.xmi
+* traceModel.xmi
+* mobstr-fmea.xlsx
+* mobstr-hazards.xlsx
+* mobstr-requirements_original.xlsx
 
 ## How to get it to work 
 
